@@ -5,7 +5,7 @@ banco de dados MySQL. O projeto também utiliza NgInx para proxy reverso.
 
 ## Como Usar:
 
-1. Execute o comando "docker compose up -d" para download das imagens e execução dos containers.
+1. Execute o comando "docker compose up -d --build" para download das imagens e execução dos containers.
 2. Acesse a aplicação no navegador na URL http://localhost:8080.
 
 ## Resultado Esperado:
