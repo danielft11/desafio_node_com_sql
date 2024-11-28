@@ -14,85 +14,41 @@ const config = {
 const pool = mysql.createPool(config);
 
 // Função para executar queries no banco de dados
-const queryDatabase = (query, values, callback) => {
-    pool.getConnection((err, connection) => {
-        if (err) {
-            console.error('Error getting connection from pool:', err);
-            return callback(err);
-        }
-        connection.query(query, values, (err, result) => {
-            connection.release(); // Libera a conexão após a query
-            callback(err, result);
-        });
-    });
-};
-
-// Criação do banco de dados, caso não exista
-const createDatabaseQuery = 'CREATE DATABASE IF NOT EXISTS people_db';
-queryDatabase(createDatabaseQuery, [], (err, result) => {
-    if (err) {
-        console.error('Error creating database:', err);
-        return;
-    }
-    console.log('Database "people_db" is ready.');
-
-    // Criação da tabela "people", caso não exista
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS people (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(255) NOT NULL
-        );
-    `;
-    
-    queryDatabase(createTableQuery, [], (err, result) => {
-        if (err) {
-            console.error('Error creating table:', err);
-            return;
-        }
-        console.log('Table "people" is ready.');
-
-        // Inserir nomes, verificando duplicatas
-        const names = ['Alice Dias', 'Wilson Aguiar', 'Joseph Blink'];
-        names.forEach(name => {
-            const checkExistQuery = 'SELECT * FROM people WHERE name = ?';
-            queryDatabase(checkExistQuery, [name], (err, result) => {
+const queryDatabase = (query, values) => {
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Error getting connection from pool:', err);
+                return reject(err);
+            }
+            connection.query(query, values, (err, result) => {
+                connection.release(); // Libera a conexão após a query
                 if (err) {
-                    console.error('Error checking for existing name:', err);
-                    return;
-                }
-                if (result.length === 0) { // Se o nome não existir, insira
-                    const insertQuery = 'INSERT INTO people (name) VALUES (?)';
-                    queryDatabase(insertQuery, [name], (err, result) => {
-                        if (err) {
-                            console.error('Error inserting name:', err);
-                            return;
-                        }
-                        console.log(`Name ${name} inserted successfully!`);
-                    });
+                    reject(err);
                 } else {
-                    console.log(`Name ${name} already exists.`);
+                    resolve(result);
                 }
             });
         });
     });
-});
+};
 
-// Rota para listar os nomes cadastrados
-app.get('/', (req, res) => {
-    queryDatabase('SELECT * FROM people', [], (err, result) => {
-        if (err) {
-            console.error('Error querying database:', err);
-            return res.status(500).send('Error querying the database');
-        }
+// Endpoint para listar os nomes cadastrados
+app.get('/users', async (req, res) => {
+    try {
+        const result = await queryDatabase('SELECT * FROM people', []);
         let response = '<h1>Full Cycle Rocks!</h1>';
-        response += '<p>Usuários:</p>'
+        response += '<p>Usuários:</p>';
         response += '<ul>';
         result.forEach(row => {
             response += `<li>${row.name}</li>`;
         });
         response += '</ul>';
         res.send(response);
-    });
+    } catch (err) {
+        console.error('Error querying database:', err);
+        res.status(500).send('Error querying the database');
+    }
 });
 
 // Inicia o servidor

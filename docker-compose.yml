@@ -20,8 +20,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
       - DB_NAME=people_db
-    volumes:
-      - ./node:/usr/src/app
+    tty: true
     networks:
       - app-network
     depends_on:
@@ -31,10 +30,13 @@ services:
     image: mysql:8
     container_name: mysql-container
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: people_db
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=people_db
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+    tty: true
     networks:
       - app-network
 
