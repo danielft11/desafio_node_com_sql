@@ -21,6 +21,8 @@ services:
       - DB_PASSWORD=root
       - DB_NAME=people_db
     tty: true
+    volumes: 
+      - node:/usr/src/app
     networks:
       - app-network
     depends_on:
@@ -41,6 +43,7 @@ services:
       - app-network
 
 volumes:
+  node:
   mysql-data:
 
 networks:
